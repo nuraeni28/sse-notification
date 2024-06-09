@@ -13,28 +13,32 @@ class NotificationController extends Controller
     {
         set_time_limit(0); // No time limit
     }
+
     public function notifications()
     {
         $response = new StreamedResponse(function () {
             Log::info('Starting StreamedResponse loop.');
-    
+
             $lastNotification = null;
-    
+            $time = null;
+
             while (true) {
                 if (Cache::has('notification')) {
                     $notification = Cache::get('notification');
                     Log::info('Notification found:', $notification);
-                    // dd($notification);
+
                     // Periksa apakah pesan null atau kosong
                     if (!empty($notification['message'])) {
                         // Periksa apakah pesan sama dengan pesan terakhir
-                        if ($lastNotification && $notification['message'] === $lastNotification) {
+                        if (($lastNotification && $notification['message'] === $lastNotification) || ($time && $notification['time'] === $time)) {
                             Log::info('Same notification found. Stopping StreamedResponse.');
-                            Cache::forget('notification');
+                            // Cache::forget('notification');
                             break;
                         }
+
+                        $time = $notification['time'];
                         $lastNotification = $notification['message'];
-                        echo "data: " . json_encode($notification) . "\n\n";
+                        echo 'data: ' . json_encode($notification) . "\n\n";
                         ob_flush();
                         flush();
                     } else {
@@ -48,44 +52,37 @@ class NotificationController extends Controller
                 sleep(5);
             }
         });
-    
+
         $response->headers->set('Content-Type', 'text/event-stream');
         $response->headers->set('Cache-Control', 'no-cache');
         $response->headers->set('Connection', 'keep-alive');
         $response->headers->set('Access-Control-Allow-Origin', '*');
-        
+
         return $response;
-    }
-    
-    
-    
-    // public function subscribe(Request $request)
-    // {
-    //     $notification = [
-    //         'message' => 'You have a new notification!',
-    //         'time' => now()->toDateTimeString()
-    //     ];
-    //     Cache::put('notification', $notification, now()->addMinutes(5));
-    //     // dd($notification);
-    //     Log::info('Notification stored:', $notification); // Pastikan notifikasi disimpan dengan benar
-    //     return response()->json(['status' => 'Notification sent']);
-    // }
-    public function showNotificationForm()
-    {
-        return view('send_notification');
     }
 
     public function sendNotification(Request $request)
     {
         $message = $request->input('message');
+        $currentTime = now()->toDateTimeString(); // Ambil waktu saat ini
 
-        // Simpan notifikasi ke dalam cache atau database
-        Cache::put('notification', [
-            'message' => $message,
-            'time' => now()->toDateTimeString()
-        ], now()->addMinutes(5));
+        Cache::forget('notification'); // Hapus notifikasi lama dari cache
+
+        // Simpan notifikasi ke dalam cache
+        Cache::put(
+            'notification',
+            [
+                'message' => $message, // Simpan pesan secara terpisah
+                'time' => $currentTime, // Simpan waktu secara terpisah
+            ],
+            now()->addMinutes(5), // Tetapkan waktu kedaluwarsa cache
+        );
 
         return response()->json(['message' => 'Notification sent successfully']);
     }
-}
 
+    public function showNotificationForm()
+    {
+        return view('send_notification');
+    }
+}

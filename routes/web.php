@@ -19,5 +19,6 @@ Route::get('/notifications', [NotificationController::class, 'notifications']);
 Route::get('/send-notification', [NotificationController::class, 'showNotificationForm']);
 Route::post('/send-notification', [NotificationController::class, 'sendNotification']);
 Route::get('/notifications-view', function () {
+      Cache::forget('notification');
     return view('notifications');
 });

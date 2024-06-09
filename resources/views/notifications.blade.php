@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laravel SSE Notifications</title>
+    <link crossorigin="use-credentials" rel="manifest" href="/manifest.json" />
 </head>
 
 <body>
@@ -14,24 +15,25 @@
     <h1>Device Details</h1>
     <ul id="device-details"></ul>
 
+    <script src="{{ secure_asset('/sw.js') }}"></script>
     <script>
-         document.addEventListener('DOMContentLoaded', async () => {
-                if ('Notification' in window) {
-                    // Periksa status izin notifikasi
-                    const currentPermission = Notification.permission;
-                    if (currentPermission === 'granted') {
-                        console.log('Notification permission already granted.');
-                        
-                        startEventSource();
-                    }  else {
-                        console.log('Notification permission denied.');
-                        // Menutup koneksi EventSource jika izin ditolak
-                        stopEventSource();
-                    }
+        document.addEventListener('DOMContentLoaded', async () => {
+            if ('Notification' in window) {
+                // Periksa status izin notifikasi
+                const currentPermission = Notification.permission;
+                if (currentPermission === 'granted') {
+                    console.log('Notification permission already granted.');
+
+                    startEventSource();
                 } else {
-                    alert('Your browser does not support notifications.');
+                    console.log('Notification permission denied.');
+                    // Menutup koneksi EventSource jika izin ditolak
+                    stopEventSource();
                 }
-            });
+            } else {
+                alert('Your browser does not support notifications.');
+            }
+        });
 
 
 
@@ -39,11 +41,11 @@
             if ('Notification' in window) {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
-                    console.log('Notification permission granted.');
+                    console.log('Notification permission granted oke');
                     // Melakukan langganan push notification
                     subscribeToPushNotifications();
-                    setTimeout(startEventSource, 5000); 
-                    
+                    setTimeout(startEventSource, 5000);
+
                 } else {
                     console.log('Notification permission denied.');
                     // Menutup koneksi EventSource jika izin ditolak
@@ -56,20 +58,28 @@
 
         function startEventSource() {
             let lastNotification = null; // Variabel untuk menyimpan pesan terakhir
+            let lastTime = null; // Variabel untuk menyimpan pesan terakhir
 
             const eventSource = new EventSource('/notifications');
             eventSource.onmessage = function(event) {
                 const notification = JSON.parse(event.data);
-                
+                console.log(notification);
                 // Periksa apakah pesan sama dengan pesan terakhir
-                // if (lastNotification && notification.message === lastNotification) {
-                //     console.log('Same notification received. Stopping EventSource.');
-                //     eventSource.close(); // Menutup koneksi EventSource
-                //     return;
-                // }
+                if (lastNotification && notification.message === lastNotification) {
+                    if (lastTime && notification.time != lastTime) {
+                        // Update pesan terakhir
+                        lastNotification = notification.message;
+
+                    } else {
+                        console.log('Same notification received. Stopping EventSource.');
+                        notification.message = '';
+                        return;
+                    }
+                }
 
                 // Update pesan terakhir
                 lastNotification = notification.message;
+                lastTime = notification.time;
 
                 // Menambahkan notifikasi ke daftar
                 const li = document.createElement('li');
@@ -100,9 +110,10 @@
         });
 
         function getDeviceDetails() {
-            const details = [
-                { name: 'User Agent', value: navigator.userAgent },
-            ];
+            const details = [{
+                name: 'User Agent',
+                value: navigator.userAgent
+            }, ];
 
             const ul = document.getElementById('device-details');
             ul.innerHTML = '';
@@ -137,6 +148,7 @@
                         })
                     });
                     alert("Push notification subscribed successfully!");
+                    console.log('success');
                 }).catch((err) => {
                     console.error('Error during service worker registration:', err);
                 });
