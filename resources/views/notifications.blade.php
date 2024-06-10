@@ -67,11 +67,11 @@
                 document.getElementById('notifications').appendChild(li);
 
                 // display a notification in the browser if permission is granted
-                if (Notification.permission === 'granted') {
-                    new Notification('New Notification', {
-                        body: notification.message,
-                    });
-                }
+                // if (Notification.permission === 'granted') {
+                //     new Notification('New Notification', {
+                //         body: notification.message,
+                //     });
+                // }
             };
         }
 
