@@ -3,7 +3,7 @@ Ngrok is used to access websites using https.<br/>
 Run ngrok according to the OS you have : https://ngrok.com/docs/getting-started/ 
 
 ## Configured The VAPID (Voluntary Application Server Identification for Web Push)
-VAPID is used to identify the server sending the push notification and ensure that the sender is a legitimate sender. Change VAPID configuration in NotificationController.php
+VAPID is used to identify the server sending the push notification and ensure that the sender is a legitimate sender. Change VAPID configuration in NotificationController.php\n . Generate VAPID can use this web (https://tools.reactpwa.com/vapid)
 ```javascript
 'VAPID' => [
     'subject' => 'mailto:nuraeniexecutive18@gmail.com',
