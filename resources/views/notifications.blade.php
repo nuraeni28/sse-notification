@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laravel SSE Notifications</title>
+    <title>Swift SSE Notifications</title>
     <link crossorigin="use-credentials" rel="manifest" href="/manifest.json" />
 </head>
 
@@ -17,38 +17,18 @@
 
     <script src="{{ secure_asset('/sw.js') }}"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            if ('Notification' in window) {
-                // Periksa status izin notifikasi
-                const currentPermission = Notification.permission;
-                if (currentPermission === 'granted') {
-                    console.log('Notification permission already granted.');
-
-                    startEventSource();
-                } else {
-                    console.log('Notification permission denied.');
-                    // Menutup koneksi EventSource jika izin ditolak
-                    stopEventSource();
-                }
-            } else {
-                alert('Your browser does not support notifications.');
-            }
-        });
-
-
-
         async function requestPermission() {
             if ('Notification' in window) {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
                     console.log('Notification permission granted oke');
-                    // Melakukan langganan push notification
+                    // Subscribe to push notifications
                     subscribeToPushNotifications();
                     setTimeout(startEventSource, 5000);
 
                 } else {
                     console.log('Notification permission denied.');
-                    // Menutup koneksi EventSource jika izin ditolak
+                    // close EventSource if the notification denied
                     stopEventSource();
                 }
             } else {
@@ -57,17 +37,17 @@
         }
 
         function startEventSource() {
-            let lastNotification = null; // Variabel untuk menyimpan pesan terakhir
-            let lastTime = null; // Variabel untuk menyimpan pesan terakhir
+            let lastNotification = null;
+            let lastTime = null;
 
             const eventSource = new EventSource('/notifications');
             eventSource.onmessage = function(event) {
                 const notification = JSON.parse(event.data);
                 console.log(notification);
-                // Periksa apakah pesan sama dengan pesan terakhir
+                //check if the message is the same as the last message
                 if (lastNotification && notification.message === lastNotification) {
                     if (lastTime && notification.time != lastTime) {
-                        // Update pesan terakhir
+                        // Update the last message
                         lastNotification = notification.message;
 
                     } else {
@@ -77,16 +57,16 @@
                     }
                 }
 
-                // Update pesan terakhir
+                // update the last message
                 lastNotification = notification.message;
                 lastTime = notification.time;
 
-                // Menambahkan notifikasi ke daftar
+                // add notification to list
                 const li = document.createElement('li');
                 li.textContent = `${notification.message} at ${notification.time}`;
                 document.getElementById('notifications').appendChild(li);
 
-                // Menampilkan notifikasi di browser jika izin diberikan
+                // display a notification in the browser if permission is granted
                 if (Notification.permission === 'granted') {
                     new Notification('New Notification', {
                         body: notification.message,
@@ -103,12 +83,13 @@
             }
         }
 
-        // Menangani klik tombol Subscribe
+        // handle button subscribe
         document.getElementById('subscribe').addEventListener('click', function() {
-            // Meminta izin notifikasi saat tombol Subscribe diklik
+            // request notification permission when the Subscribe button is clicked
             requestPermission();
         });
 
+        //get detail device
         function getDeviceDetails() {
             const details = [{
                 name: 'User Agent',
@@ -124,20 +105,26 @@
             });
         }
 
-        // Load device details when the page loads
+        // load device details when the page loads
         document.addEventListener('DOMContentLoaded', getDeviceDetails);
 
-        // Fungsi untuk melakukan langganan push notification
+        // function to subscribe to push notification
         function subscribeToPushNotifications() {
             if ('serviceWorker' in navigator) {
                 // const userAgent = navigator.userAgent;
+                $dd = navigator.serviceWorker.register('/sw.js', {
+                    scope: '/'
+                })
                 navigator.serviceWorker.ready.then(async (swRegistration) => {
-                    // Mendaftarkan service worker
+                    // registering service workers
+                    const applicationServerKey = urlB64ToUint8Array(
+                        'BEDiM-FMR3437Pq1dG-IO8cvG0OaIp9ijJN38KOsZ58LJtByiOXiE-jzZ_YN6wF6jMeC_Ny6aucsdqt1HhDLSiU'
+                    ); //change with your public key VAPID
                     const subscription = await swRegistration.pushManager.subscribe({
                         userVisibleOnly: true,
-                        applicationServerKey: "BLMnf15iZSxbmXB1AGOzighScnRn37-34767SAJ5_OcmiPr681Z4Y_3llV5i3Hfg9tMrXyhqY36ngdQ5aNQWmew"
+                        applicationServerKey: applicationServerKey
                     });
-                    // Mengirim data langganan ke server
+                    // send subscription data to the server
                     await fetch('/api/push-subscribe', {
                         method: 'POST',
                         headers: {
@@ -155,6 +142,21 @@
             } else {
                 alert('Service workers are not supported in this browser.');
             }
+        }
+        // Function to convert VAPID public key from Base64 URL Safe to Uint8Array
+        function urlB64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/\-/g, '+')
+                .replace(/_/g, '/');
+
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
         }
     </script>
 

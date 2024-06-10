@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Laravel SSE Notifications</title>
+    <title>Swift SSE Notifications</title>
 </head>
+
 <body>
-    <h1>Laravel SSE Notifications</h1>
+    <h1>Swift SSE Notifications</h1>
     <script>
         if (window.EventSource) {
             const source = new EventSource('/notifications');
@@ -28,4 +30,5 @@
         }
     </script>
 </body>
+
 </html>
