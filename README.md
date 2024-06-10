@@ -3,14 +3,22 @@ Ngrok is used to access websites using https.<br/>
 Run ngrok according to the OS you have : https://ngrok.com/docs/getting-started/ 
 
 ## Configured The VAPID (Voluntary Application Server Identification for Web Push)
-VAPID is used to identify the server sending the push notification and ensure that the sender is a legitimate sender. Change VAPID configuration in NotificationController.php\n . Generate VAPID can use this web (https://tools.reactpwa.com/vapid)
-```javascript
-'VAPID' => [
-    'subject' => 'mailto:nuraeniexecutive18@gmail.com',
-    'publicKey' => 'BEDiM-FMR3437Pq1dG-IO8cvG0OaIp9ijJN38KOsZ58LJtByiOXiE-jzZ_YN6wF6jMeC_Ny6aucsdqt1HhDLSiU',
-    'privateKey' => 'OAW8vIPz7055qyIGQpyIeAnG1phHaD7iSG7R0g0Cpdk',
-],
-```
+
+1. Open the `NotificationController.php` file.
+
+2. Replace the VAPID configuration with the new one. You can generate a new VAPID key using [VAPID Generator](https://tools.reactpwa.com/vapid).
+
+3. Enter the new VAPID configuration as in the example below:
+
+   ```php
+   $webPush = new WebPush([
+       'VAPID' => [
+           'subject' => 'mailto:your-email@example.com',
+           'publicKey' => 'YOUR_NEW_PUBLIC_KEY',
+           'privateKey' => 'YOUR_NEW_PRIVATE_KEY',
+       ],
+   ]);
+
 ## .env 
 TELEGRAM_WEBHOOK_URL= 'WEBHOOK_URL/api/swiftbot/webhook'
 
